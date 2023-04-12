@@ -249,10 +249,14 @@ abstract class AbstractParser
             $this->regexList = $this->getCache()->fetch($cacheKey);
 
             if (empty($this->regexList)) {
-                $this->regexList = $this->getYamlParser()->parseFile(
-                    $this->getRegexesDirectory() . DIRECTORY_SEPARATOR . $this->fixtureFile
-                );
-                $this->getCache()->save($cacheKey, $this->regexList);
+                $fixture_path = $this->getRegexesDirectory() . DIRECTORY_SEPARATOR . $this->fixtureFile;
+                $serialized_fixture_path = $fixture_path . '.serialized';
+                if(file_exists($serialized_fixture_path)) {
+                    $this->regexList = unserialize(file_get_contents($serialized_fixture_path));
+                } else {
+                    $this->regexList = $this->getYamlParser()->parseFile($fixture_path);
+                    file_put_contents($serialized_fixture_path, serialize($this->regexList));
+                }
             }
         }
 
