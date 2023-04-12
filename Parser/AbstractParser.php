@@ -250,7 +250,12 @@ abstract class AbstractParser
 
             if (empty($this->regexList)) {
                 $fixture_path = $this->getRegexesDirectory() . DIRECTORY_SEPARATOR . $this->fixtureFile;
-                $serialized_fixture_path = $fixture_path . '.serialized';
+                $hash = md5_file($fixture_path);
+                $serialized_dir_path = $this->getRegexesDirectory() . DIRECTORY_SEPARATOR . 'regexes' . DIRECTORY_SEPARATOR  . 'serialized';
+                if(!is_dir($serialized_dir_path)) {
+                    mkdir($serialized_dir_path, recursive: true);
+                }
+                $serialized_fixture_path = $serialized_dir_path. DIRECTORY_SEPARATOR. $hash . '.serialized';
                 if(file_exists($serialized_fixture_path)) {
                     $this->regexList = unserialize(file_get_contents($serialized_fixture_path));
                 } else {
