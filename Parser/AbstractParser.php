@@ -249,16 +249,22 @@ abstract class AbstractParser
             $this->regexList = $this->getCache()->fetch($cacheKey);
 
             if (empty($this->regexList)) {
-                $fixture_path = $this->getRegexesDirectory() . DIRECTORY_SEPARATOR . $this->fixtureFile;
-                $hash = md5_file($fixture_path);
-                $serialized_dir_path = $this->getRegexesDirectory() . DIRECTORY_SEPARATOR . 'regexes' . DIRECTORY_SEPARATOR  . 'serialized';
-                $serialized_fixture_path = $serialized_dir_path. DIRECTORY_SEPARATOR. $hash . '.serialized';
-                if(file_exists($serialized_fixture_path)) {
-                    $this->regexList = unserialize(file_get_contents($serialized_fixture_path));
-                } else {
-                    $this->regexList = $this->getYamlParser()->parseFile($fixture_path);
-                    file_put_contents($serialized_fixture_path, serialize($this->regexList));
-                }
+                $fixturePath           = $this->getRegexesDirectory() . DIRECTORY_SEPARATOR . $this->fixtureFile;
+                $regexesPath           = $this->getRegexesDirectory() . DIRECTORY_SEPARATOR . 'regexes';
+                $filename              = \basename($fixturePath);
+                $hash                  = \md5_file($fixturePath);
+                $serializedDirPath     = $regexesPath . DIRECTORY_SEPARATOR . 'serialized';
+                $serializedFilename    = $filename . '.' . $hash . '.serialized';
+                $serializedFixturePath = $serializedDirPath . DIRECTORY_SEPARATOR . $serializedFilename;
+
+                $this->regexList = \file_exists($serializedFixturePath)
+                    ? \unserialize(\file_get_contents($serializedFixturePath))
+                    : $this->getYamlParser()->parseFile($fixturePath);
+//                Needed for preprocessing only
+//                if (! file_exists($serializedFixturePath)) {
+//                    file_put_contents($serializedFixturePath, serialize($this->regexList));
+//                }
+
             }
         }
 
