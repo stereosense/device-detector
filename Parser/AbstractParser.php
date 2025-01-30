@@ -278,7 +278,7 @@ abstract class AbstractParser
      *
      * @return array
      */
-    protected function getRegexes(): array
+    protected function getRegexesOriginal(): array
     {
         if (empty($this->regexList)) {
             $cacheKey     = 'DeviceDetector-' . DeviceDetector::VERSION . 'regexes-' . $this->getName();
@@ -300,6 +300,44 @@ abstract class AbstractParser
 
                 $this->regexList = $parsedContent;
                 $this->getCache()->save($cacheKey, $this->regexList);
+            }
+        }
+
+        return $this->regexList;
+    }
+
+    protected function getRegexes(): array
+    {
+        if (empty($this->regexList)) {
+            $cacheKey        = 'DeviceDetector-' . DeviceDetector::VERSION . 'regexes-' . $this->getName();
+            $cacheKey        = (string) \preg_replace('/([^a-z0-9_-]+)/i', '', $cacheKey);
+            $this->regexList = $this->getCache()->fetch($cacheKey);
+
+            if (empty($this->regexList)) {
+                $fixturePath           = $this->getRegexesDirectory() . DIRECTORY_SEPARATOR . $this->fixtureFile;
+                $regexesPath           = $this->getRegexesDirectory() . DIRECTORY_SEPARATOR . 'regexes';
+                $filename              = \basename($fixturePath);
+                $hash                  = \md5_file($fixturePath);
+                $serializedDirPath     = $regexesPath . DIRECTORY_SEPARATOR . 'serialized';
+                $serializedFilename    = $filename . '.' . $hash . '.serialized';
+                $serializedFixturePath = $serializedDirPath . DIRECTORY_SEPARATOR . $serializedFilename;
+                $serializedFixtureExists = \file_exists($serializedFixturePath);
+
+                $parsedContent = $serializedFixtureExists
+                    ? \unserialize(\file_get_contents($serializedFixturePath))
+                    : $this->getYamlParser()->parseFile($fixturePath);
+
+                if (!\is_array($parsedContent)) {
+                    $parsedContent = [];
+                }
+
+                $this->regexList = $parsedContent;
+                $this->getCache()->save($cacheKey, $this->regexList);
+
+//                Needed for preprocessing only
+//                 if (!$serializedFixtureExists) {
+//                     \file_put_contents($serializedFixturePath, \serialize($this->regexList));
+//                 }
             }
         }
 
